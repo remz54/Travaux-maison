@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ma Maison – Par Pièce</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;1,300&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #1a1a18;
+  --surface: #222220;
+  --surface2: #2a2a27;
+  --border: #38382f;
+  --accent: #d4a843;
+  --accent2: #7eb89a;
+  --accent3: #c47b5a;
+  --text: #e8e4d8;
+  --muted: #7a7868;
+  --done: #3a4a3e;
+  --feasible: #2a3d2e;
+  --infeasible: #3d2a1e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 0 80px;
+}
+
+/* HEADER */
+header {
+  text-align: center;
+  padding: 28px 14px 16px;
+  position: relative;
+}
+header h1 {
+  font-family: 'Fraunces', serif;
+  font-size: 2.2rem;
+  font-weight: 300;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+header h1 em { font-style: italic; font-weight: 300; }
+header p { color: var(--muted); font-size: 0.8rem; margin-top: 6px; letter-spacing: 1px; text-transform: uppercase; }
+
+/* GLOBAL STATS */
+.global-stats {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 0 14px 24px;
+  flex-wrap: wrap;
+}
+.gstat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 18px;
+  text-align: center;
+}
+.gstat-n { font-family: 'Fraunces', serif; font-size: 1.5rem; color: var(--accent); }
+.gstat-l { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; }
+
+/* ROOM NAV MENU */
+.room-nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 14px;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.room-nav::-webkit-scrollbar { display: none; }
+.nav-btn {
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-family: 'Instrument Sans', sans-serif;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.nav-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 500; }
+
+/* ROOMS CONTAINER */
+#rooms { padding: 16px 14px 0; }
+
+/* ROOM CARD */
+.room {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+  scroll-margin-top: 60px;
+}
+.room.all-done { border-color: var(--accent2); }
+
+.room-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.room-header:hover { background: var(--surface2); }
+.room-icon { font-size: 1.3rem; flex-shrink: 0; }
+.room-name { font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 300; flex: 1; color: var(--text); }
+.room-progress-pill { font-size: 0.72rem; color: var(--muted); background: var(--bg); border-radius: 20px; padding: 3px 10px; }
+.chevron { color: var(--muted); font-size: 0.75rem; transition: transform 0.25s; }
+.room.collapsed .chevron { transform: rotate(-90deg); }
+.room.collapsed .room-body { display: none; }
+.room-body { padding: 0; }
+
+/* Progress bar */
+.prog-bar { height: 2px; background: var(--border); }
+.prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); transition: width 0.4s; width: 0%; }
+
+/* TABS */
+.tabs { display: flex; border-bottom: 1px solid var(--border); }
+.tab {
+  flex: 1; text-align: center; padding: 10px;
+  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+  transition: all 0.15s; user-select: none;
+}
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab:hover:not(.active) { color: var(--text); }
+.tab-pane { display: none; padding: 6px 0 10px; }
+.tab-pane.active { display: block; }
+
+/* TASKS & ITEMS */
+.task, .purchase {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 10px 18px; border-bottom: 1px solid #2f2f2a;
+  cursor: pointer; transition: background 0.12s; position: relative;
+}
+.task:last-child, .purchase:last-child { border-bottom: none; }
+.task:hover, .purchase:hover { background: var(--surface2); }
+.task.done, .purchase.done { background: #1f2a22; }
+.task.done .t-label, .purchase.done .p-label { text-decoration: line-through; color: var(--muted); }
+
+/* Feasibility indicator on tasks */
+.task.feasible { border-left: 3px solid var(--accent2); }
+.task.infeasible { border-left: 3px solid var(--accent3); }
+
+.chk {
+  width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid var(--border);
+  flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; transition: all 0.15s; cursor: pointer;
+}
+.task.done .chk { background: var(--accent2); border-color: var(--accent2); color: #1a1a18; }
+.purchase.done .chk { background: var(--accent); border-color: var(--accent); color: #1a1a18; }
+
+.t-label, .p-label { font-size: 0.88rem; flex: 1; line-height: 1.45; }
+
+/* Feasibility badge */
+.feasibility-badge {
+  font-size: 0.62rem;
+  padding: 2px 7px;
+  border-radius: 20px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  font-weight: 500;
+}
+.badge-ok { background: #1e3828; color: var(--accent2); }
+.badge-partial { background: #3d2a1e; color: var(--accent3); }
+.badge-none { background: #2a1e1e; color: #e07070; }
+
+/* Linked badge */
+.link-badges { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.link-badge {
+  font-size: 0.65rem; padding: 2px 8px; border-radius: 20px;
+  border: 1px solid; display: inline-flex; align-items: center; gap: 4px;
+}
+.link-badge.need { border-color: #c47b5a55; color: var(--accent3); background: #c47b5a12; }
+.link-badge.for  { border-color: #d4a84355; color: var(--accent);  background: #d4a84312; }
+
+.priority { font-size: 0.65rem; padding: 2px 8px; border-radius: 20px; flex-shrink: 0; margin-top: 2px; cursor: pointer; border: none; font-family: 'Instrument Sans', sans-serif; }
+.p-urgent { background: #3a1e1e; color: #e07070; }
+.p-moyen  { background: #2e2510; color: #c49040; }
+.p-calme  { background: #1e2e26; color: var(--accent2); }
+
+/* Item action buttons — always visible on touch devices */
+.item-actions {
+  display: flex; gap: 4px; flex-shrink: 0; margin-top: 2px;
+  opacity: 1;
+}
+.action-btn {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--muted); font-size: 0.75rem; padding: 4px 8px; cursor: pointer;
+  font-family: 'Instrument Sans', sans-serif; transition: all 0.15s;
+  min-width: 32px; text-align: center;
+}
+.action-btn:hover, .action-btn:active { border-color: var(--accent); color: var(--accent); background: var(--surface); }
+
+/* ADD FORM */
+.add-area { border-top: 1px dashed var(--border); padding: 10px 18px 14px; }
+.add-toggle {
+  background: none; border: 1px dashed var(--border); border-radius: 8px;
+  color: var(--muted); font-size: 0.82rem; padding: 6px 14px; cursor: pointer;
+  width: 100%; text-align: left; transition: all 0.15s; font-family: 'Instrument Sans', sans-serif;
+}
+.add-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.add-form { display: none; flex-direction: column; gap: 8px; margin-top: 8px; }
+.add-form.open { display: flex; }
+.add-form input[type="text"] {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 12px; color: var(--text); font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.82rem; outline: none; width: 100%;
+}
+.add-form input[type="text"]:focus { border-color: var(--accent); }
+.priority-selector { display: flex; gap: 6px; }
+.prio-btn {
+  flex: 1; padding: 5px 8px; border-radius: 8px; border: 1.5px solid transparent;
+  font-size: 0.75rem; cursor: pointer; font-family: 'Instrument Sans', sans-serif;
+  transition: all 0.15s; text-align: center;
+}
+.prio-btn[data-p="urgent"] { background: #3a1e1e; color: #e07070; }
+.prio-btn[data-p="moyen"]  { background: #2e2510; color: #c49040; }
+.prio-btn[data-p="calme"]  { background: #1e2e26; color: var(--accent2); }
+.prio-btn.selected[data-p="urgent"] { border-color: #e07070; }
+.prio-btn.selected[data-p="moyen"]  { border-color: #c49040; }
+.prio-btn.selected[data-p="calme"]  { border-color: var(--accent2); }
+.links-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; }
+.links-list { display: flex; flex-direction: column; gap: 4px; max-height: 120px; overflow-y: auto; }
+.link-option {
+  display: flex; align-items: center; gap: 8px; padding: 4px 8px;
+  border-radius: 7px; cursor: pointer; font-size: 0.8rem; transition: background 0.12s;
+}
+.link-option:hover { background: var(--surface2); }
+.link-option input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+.add-form-row { display: flex; gap: 8px; }
+.add-form-row .add-form-submit {
+  background: var(--accent); color: var(--bg); border: none; border-radius: 8px;
+  padding: 7px 16px; font-size: 0.85rem; cursor: pointer; font-weight: 500;
+  transition: opacity 0.15s; white-space: nowrap;
+}
+.add-form-row .add-form-submit:hover { opacity: 0.85; }
+.add-form-row .add-form-cancel {
+  background: none; border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 12px; font-size: 0.85rem; cursor: pointer; color: var(--muted); transition: all 0.15s;
+}
+.add-form-row .add-form-cancel:hover { color: var(--text); border-color: var(--text); }
+.empty { color: var(--muted); font-size: 0.82rem; padding: 14px 18px; font-style: italic; }
+
+/* PRIORITY POPUP */
+.prio-popup {
+  position: fixed; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 6px; display: flex; flex-direction: column;
+  gap: 4px; z-index: 1000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.prio-popup button {
+  padding: 5px 14px; border-radius: 7px; border: none; font-size: 0.78rem;
+  cursor: pointer; font-family: 'Instrument Sans', sans-serif; text-align: left;
+}
+.prio-popup button[data-p="urgent"] { background: #3a1e1e; color: #e07070; }
+.prio-popup button[data-p="moyen"]  { background: #2e2510; color: #c49040; }
+.prio-popup button[data-p="calme"]  { background: #1e2e26; color: var(--accent2); }
+.prio-popup button:hover { filter: brightness(1.3); }
+
+/* EDIT LINKS MODAL */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+  padding: 24px; max-width: 420px; width: 100%; max-height: 80vh;
+  display: flex; flex-direction: column; gap: 14px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+.modal h3 { font-family: 'Fraunces', serif; font-weight: 300; color: var(--accent); font-size: 1.1rem; }
+.modal-subtitle { font-size: 0.78rem; color: var(--muted); }
+.modal-scroll { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.modal-actions { display: flex; gap: 8px; }
+.modal-actions .btn-save {
+  flex: 1; background: var(--accent); color: var(--bg); border: none;
+  border-radius: 10px; padding: 10px; font-size: 0.88rem; cursor: pointer;
+  font-family: 'Instrument Sans', sans-serif; font-weight: 500;
+}
+.modal-actions .btn-cancel {
+  background: none; border: 1px solid var(--border); border-radius: 10px;
+  padding: 10px 16px; font-size: 0.88rem; cursor: pointer; color: var(--muted);
+  font-family: 'Instrument Sans', sans-serif;
+}
+.modal-actions .btn-cancel:hover { color: var(--text); border-color: var(--text); }
+
+/* TASK DETAIL / EDIT MODAL */
+.modal-section-title {
+  font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
+  letter-spacing: 0.8px; margin-bottom: 4px;
+}
+.modal-input {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 9px 13px; color: var(--text); font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.9rem; outline: none; width: 100%;
+}
+.modal-input:focus { border-color: var(--accent); }
+.modal-textarea {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 10px;
+  padding: 9px 13px; color: var(--text); font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.85rem; outline: none; width: 100%; resize: vertical;
+  min-height: 100px; line-height: 1.5;
+}
+.modal-textarea:focus { border-color: var(--accent2); }
+.modal-prio-row { display: flex; gap: 6px; }
+.modal-prio-btn {
+  flex: 1; padding: 7px 8px; border-radius: 8px; border: 1.5px solid transparent;
+  font-size: 0.78rem; cursor: pointer; font-family: 'Instrument Sans', sans-serif;
+  transition: all 0.15s; text-align: center;
+}
+.modal-prio-btn[data-p="urgent"] { background: #3a1e1e; color: #e07070; }
+.modal-prio-btn[data-p="moyen"]  { background: #2e2510; color: #c49040; }
+.modal-prio-btn[data-p="calme"]  { background: #1e2e26; color: var(--accent2); }
+.modal-prio-btn.selected[data-p="urgent"] { border-color: #e07070; }
+.modal-prio-btn.selected[data-p="moyen"]  { border-color: #c49040; }
+.modal-prio-btn.selected[data-p="calme"]  { border-color: var(--accent2); }
+.modal-sep { height: 1px; background: var(--border); margin: 2px 0; }
+.modal-comment-preview {
+  font-size: 0.75rem; color: var(--muted); font-style: italic;
+  margin-top: 4px; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 160px;
+}
+/* Comment dot on task */
+.comment-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--accent2);
+  flex-shrink: 0; margin-top: 6px; display: none;
+}
+.has-comment .comment-dot { display: block; }
+.modal-actions .btn-delete {
+  background: none; border: 1px solid #5a2a2a; border-radius: 10px;
+  padding: 10px 14px; font-size: 0.82rem; cursor: pointer; color: #c06060;
+  font-family: 'Instrument Sans', sans-serif; transition: all 0.15s;
+}
+.modal-actions .btn-delete:hover { background: #3a1a1a; }
+
+/* Price badge on purchases */
+.price-badge {
+  font-size: 0.68rem; padding: 2px 8px; border-radius: 20px;
+  background: #2a2510; color: var(--accent); border: 1px solid #d4a84344;
+  flex-shrink: 0; margin-top: 2px; font-weight: 500;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🏠 <em>Ma</em> Maison</h1>
+  <p>Tâches &amp; achats — par pièce</p>
+</header>
+
+<div class="global-stats">
+  <div class="gstat"><div class="gstat-n" id="gs-tasks">0</div><div class="gstat-l">Tâches</div></div>
+  <div class="gstat"><div class="gstat-n" id="gs-purchases">0</div><div class="gstat-l">Achats</div></div>
+  <div class="gstat"><div class="gstat-n" id="gs-done">0</div><div class="gstat-l">Faits ✓</div></div>
+  <div class="gstat"><div class="gstat-n" id="gs-left">0</div><div class="gstat-l">Restants</div></div>
+</div>
+
+<nav class="room-nav" id="room-nav"></nav>
+<div id="rooms"></div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const ROOMS = [
+  {
+    id: "salon", icon: "🛋️", name: "Salon",
+    tasks: [
+      { id: "t_table_salon", label: "Fabriquer la table de salon", priority: "calme", needs: ["p_tatamis"] },
+      { id: "t_meuble_tv",   label: "Couper le meuble TV",          priority: "moyen",  needs: [] },
+      { id: "t_table_int",   label: "Poncer la table et la peindre", priority: "moyen", needs: ["p_peinture_brune_salon"] },
+      { id: "t_amenagement_salon", label: "Aménagement salon", priority: "calme", needs: ["p_canape_sol","p_chaises_sol","p_coussin"] },
+    ],
+    purchases: [
+      { id: "p_tele",               label: "Télé OLED LG 55 pouces",            forTasks: ["t_meuble_tv"] },
+      { id: "p_tatamis",            label: "Tatamis",                            forTasks: ["t_table_salon"] },
+      { id: "p_ventilo",            label: "2 ventilateurs plafond (max 65 cm)", forTasks: [] },
+      { id: "p_peinture_brune_salon", label: "Peinture brune",                   forTasks: ["t_table_int"] },
+      { id: "p_canape_sol",         label: "Canapé sol",                         forTasks: ["t_amenagement_salon"] },
+      { id: "p_chaises_sol",        label: "Chaises sol",                        forTasks: ["t_amenagement_salon"] },
+      { id: "p_coussin",            label: "Coussin",                            forTasks: ["t_amenagement_salon"] },
+    ]
+  },
+  {
+    id: "entree", icon: "🚪", name: "Entrée",
+    tasks: [
+      { id: "t_placard",  label: "Finir le placard de l'entrée", priority: "urgent", needs: ["p_peinture_jaune"] },
+      { id: "t_serrure",  label: "Changer serrure",              priority: "calme",  needs: ["p_serrure"] },
+    ],
+    purchases: [
+      { id: "p_peinture_jaune", label: "Peinture jaune",   forTasks: ["t_placard"] },
+      { id: "p_serrure",        label: "Acheter serrure",  forTasks: ["t_serrure"] },
+    ]
+  },
+  {
+    id: "couloir", icon: "🔆", name: "Couloir",
+    tasks: [
+      { id: "t_rampe", label: "Rampe", priority: "calme", needs: ["p_rampe"] },
+    ],
+    purchases: [
+      { id: "p_robot1", label: "Robot aspirateur Dreame", forTasks: [] },
+      { id: "p_rampe",  label: "Acheter rampe",           forTasks: ["t_rampe"] },
+    ]
+  },
+  {
+    id: "bureau", icon: "💻", name: "Bureau",
+    tasks: [
+      { id: "t_bureau", label: "Finir le bureau", priority: "urgent", needs: ["p_spot", "p_robot2"] },
+    ],
+    purchases: [
+      { id: "p_spot",   label: "Spot bureau",             forTasks: ["t_bureau"] },
+      { id: "p_robot2", label: "Robot aspirateur Dreame", forTasks: ["t_bureau"] },
+    ]
+  },
+  {
+    id: "chambre", icon: "🛏️", name: "Chambre",
+    tasks: [],
+    purchases: [
+      { id: "p_plafonnier", label: "Plafonnier chambre", forTasks: [] },
+    ]
+  },
+  {
+    id: "gaming", icon: "🎮", name: "Salle Gaming",
+    tasks: [
+      { id: "t_oiseau", label: "Enlever oiseau", priority: "calme", needs: [] },
+      { id: "t_cadre",  label: "Mettre cadre",   priority: "calme", needs: [] },
+    ],
+    purchases: [
+      { id: "p_canape", label: "Canapé", forTasks: [] },
+    ]
+  },
+  {
+    id: "billard", icon: "🎱", name: "Salle Billard",
+    tasks: [
+      { id: "t_amenager_billard", label: "Aménager salle billard", priority: "calme", needs: ["p_lampes","p_tonneau","p_support_queue"] },
+    ],
+    purchases: [
+      { id: "p_lampes",       label: "Lampes",          forTasks: ["t_amenager_billard"] },
+      { id: "p_tonneau",      label: "Tonneau",         forTasks: ["t_amenager_billard"] },
+      { id: "p_support_queue",label: "Support à queue", forTasks: ["t_amenager_billard"] },
+    ]
+  },
+  {
+    id: "cuisine", icon: "🍳", name: "Cuisine",
+    tasks: [
+      { id: "t_equiper_cuisine", label: "Équiper cuisine", priority: "calme", needs: ["p_pyrex"] },
+    ],
+    purchases: [
+      { id: "p_pyrex", label: "Pyrex", forTasks: ["t_equiper_cuisine"] },
+    ]
+  },
+  { id: "sdb_haut", icon: "🚿", name: "Salle de bain Haut", tasks: [], purchases: [] },
+  { id: "sdb_rdc",  icon: "🛁", name: "Salle de bain RDC",  tasks: [], purchases: [] },
+  { id: "wc_rdc",   icon: "🚽", name: "WC RDC",              tasks: [], purchases: [] },
+  {
+    id: "exterieur", icon: "🌿", name: "Extérieur",
+    tasks: [
+      { id: "t_pente",    label: "Faire une pente en béton",           priority: "moyen", needs: ["p_beton","p_colorant"] },
+      { id: "t_abri1",    label: "Peindre les deux abris à poubelles", priority: "moyen", needs: ["p_peinture_noire"] },
+      { id: "t_abri2",    label: "Mettre le toit des abris",           priority: "moyen", needs: [] },
+      { id: "t_muret",    label: "Refaire le muret devant la maison",  priority: "calme", needs: [] },
+      { id: "t_marquise", label: "Réparer marquise",                   priority: "calme", needs: ["p_carreau"] },
+    ],
+    purchases: [
+      { id: "p_beton",          label: "Béton",          forTasks: ["t_pente"] },
+      { id: "p_colorant",       label: "Colorant béton", forTasks: ["t_pente"] },
+      { id: "p_peinture_noire", label: "Peinture noire", forTasks: ["t_abri1"] },
+      { id: "p_tondeuse",       label: "Tondeuse",        forTasks: [] },
+      { id: "p_carreau",        label: "Carreau",         forTasks: ["t_marquise"] },
+    ]
+  },
+  {
+    id: "chaufferie", icon: "🔧", name: "Chaufferie",
+    tasks: [
+      { id: "t_muret_chauf",  label: "Refaire le muret chaufferie", priority: "calme", needs: [] },
+      { id: "t_meuble_outil", label: "Faire le meuble à outillage", priority: "calme", needs: ["p_etabli"] },
+    ],
+    purchases: [
+      { id: "p_etabli", label: "Établi", forTasks: ["t_meuble_outil"] },
+    ]
+  },
+  {
+    id: "grenier", icon: "🏚️", name: "Grenier",
+    tasks: [
+      { id: "t_isolation", label: "Enlever isolation",  priority: "calme", needs: [] },
+      { id: "t_reparer_sol", label: "Réparer sol",      priority: "calme", needs: ["p_plaque_plancher"] },
+    ],
+    purchases: [
+      { id: "p_plaque_plancher", label: "Plaque de plancher", forTasks: ["t_reparer_sol"] },
+    ]
+  },
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+let state  = JSON.parse(localStorage.getItem('maison3_state')  || '{}');
+let extras = JSON.parse(localStorage.getItem('maison3_extras') || '{}');
+
+function save() {
+  localStorage.setItem('maison3_state',  JSON.stringify(state));
+  localStorage.setItem('maison3_extras', JSON.stringify(extras));
+}
+
+// ─── LABEL MAPS ─────────────────────────────────────────────────────────────
+const purchaseLabels = {};
+const taskLabels = {};
+function rebuildLabelMaps() {
+  ROOMS.forEach(r => {
+    r.purchases.forEach(p => purchaseLabels[p.id] = p.label);
+    r.tasks.forEach(t => taskLabels[t.id] = t.label);
+  });
+  Object.values(extras).forEach(e => {
+    (e.tasks||[]).forEach(t => taskLabels[t.id] = t.label);
+    (e.purchases||[]).forEach(p => purchaseLabels[p.id] = p.label);
+  });
+}
+
+// ─── FEASIBILITY ─────────────────────────────────────────────────────────────
+// Returns { status: 'ok'|'partial'|'none'|'free', have, total }
+function getFeasibility(task) {
+  const needs = task.needs || [];
+  if (!needs.length) return { status: 'free', have: 0, total: 0 };
+  const have = needs.filter(pid => state[pid]).length;
+  if (have === needs.length) return { status: 'ok', have, total: needs.length };
+  if (have > 0) return { status: 'partial', have, total: needs.length };
+  return { status: 'none', have, total: needs.length };
+}
+
+function feasibilityBadgeHTML(task) {
+  const f = getFeasibility(task);
+  if (f.status === 'free') return '';
+  const map = {
+    ok:      { cls: 'badge-ok',      txt: `✅ Prêt (${f.have}/${f.total})` },
+    partial: { cls: 'badge-partial', txt: `⚠️ Partiel (${f.have}/${f.total})` },
+    none:    { cls: 'badge-none',    txt: `❌ Manque achats (0/${f.total})` },
+  };
+  const b = map[f.status];
+  return `<span class="feasibility-badge ${b.cls}">${b.txt}</span>`;
+}
+
+// ─── STATS ───────────────────────────────────────────────────────────────────
+function updateGlobalStats() {
+  let tasks=0, purchases=0, done=0;
+  document.querySelectorAll('.task').forEach(el => { tasks++; if(el.classList.contains('done')) done++; });
+  document.querySelectorAll('.purchase').forEach(el => { purchases++; if(el.classList.contains('done')) done++; });
+  document.getElementById('gs-tasks').textContent = tasks;
+  document.getElementById('gs-purchases').textContent = purchases;
+  document.getElementById('gs-done').textContent = done;
+  document.getElementById('gs-left').textContent = (tasks+purchases)-done;
+}
+
+function updateRoomProgress(roomEl) {
+  const all = roomEl.querySelectorAll('.task, .purchase');
+  const doneCount = roomEl.querySelectorAll('.task.done, .purchase.done').length;
+  const pct = all.length ? doneCount/all.length*100 : 0;
+  roomEl.querySelector('.prog-fill').style.width = pct+'%';
+  roomEl.querySelector('.room-progress-pill').textContent = doneCount+'/'+all.length;
+  roomEl.classList.toggle('all-done', all.length > 0 && doneCount === all.length);
+}
+
+// Refresh feasibility badges on all tasks in a room after purchases change
+function refreshFeasibilityInRoom(roomEl) {
+  roomEl.querySelectorAll('.task').forEach(el => {
+    const taskId = el.dataset.id;
+    // Find the task object
+    let task = null;
+    ROOMS.forEach(r => {
+      r.tasks.forEach(t => { if(t.id === taskId) task = t; });
+    });
+    if (!task) {
+      Object.values(extras).forEach(e => {
+        (e.tasks||[]).forEach(t => { if(t.id === taskId) task = t; });
+      });
+    }
+    if (!task) return;
+    const f = getFeasibility(task);
+    el.classList.remove('feasible','infeasible');
+    if (f.status === 'ok') el.classList.add('feasible');
+    else if (f.status === 'partial' || f.status === 'none') el.classList.add('infeasible');
+    const badge = el.querySelector('.feasibility-badge');
+    if (badge) badge.outerHTML = feasibilityBadgeHTML(task);
+  });
+}
+
+// ─── TOGGLE ──────────────────────────────────────────────────────────────────
+function toggleItem(el, id, roomEl) {
+  const done = !el.classList.contains('done');
+  el.classList.toggle('done', done);
+  el.querySelector('.chk').textContent = done ? '✓' : '';
+  state[id] = done;
+  save();
+  updateRoomProgress(roomEl);
+  updateGlobalStats();
+  // If a purchase was toggled, refresh feasibility of all tasks in all rooms
+  if (el.classList.contains('purchase') || el.dataset.isPurchase) {
+    document.querySelectorAll('.room').forEach(r => refreshFeasibilityInRoom(r));
+  }
+}
+
+// ─── PRIORITY POPUP ──────────────────────────────────────────────────────────
+let activePopup = null;
+function closePrioPopup() { if (activePopup) { activePopup.remove(); activePopup = null; } }
+document.addEventListener('click', closePrioPopup);
+
+function showPrioPopup(btn, currentPrio, onChange) {
+  closePrioPopup();
+  const popup = document.createElement('div');
+  popup.className = 'prio-popup';
+  ['urgent','moyen','calme'].forEach(p => {
+    const b = document.createElement('button');
+    b.dataset.p = p;
+    b.textContent = { urgent: '🔴 Urgent', moyen: '🟡 Moyen', calme: '🟢 Calme' }[p];
+    b.addEventListener('click', e => { e.stopPropagation(); onChange(p); closePrioPopup(); });
+    popup.appendChild(b);
+  });
+  const rect = btn.getBoundingClientRect();
+  popup.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+  popup.style.left = rect.left + 'px';
+  document.body.appendChild(popup);
+  activePopup = popup;
+}
+
+// ─── LINK-EDIT MODAL ─────────────────────────────────────────────────────────
+function openEditLinksModal(item, type, room, roomEl, tasksList, purchasesList) {
+  // type = 'task' or 'purchase'
+  // For a task: edit task.needs (links to purchases)
+  // For a purchase: edit purchase.forTasks (links to tasks)
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+
+  const sourceItems = type === 'task'
+    ? [...room.purchases]
+    : [...room.tasks];
+
+  const currentLinks = type === 'task' ? (item.needs||[]) : (item.forTasks||[]);
+  const selected = new Set(currentLinks);
+
+  modal.innerHTML = `
+    <div class="modal">
+      <h3>🔗 Modifier les liens</h3>
+      <div class="modal-subtitle">${type === 'task' ? 'Achats nécessaires pour' : 'Tâches liées à'} : <strong style="color:var(--text)">${item.label}</strong></div>
+      <div class="modal-scroll" id="modal-links-list"></div>
+      <div class="modal-actions">
+        <button class="btn-cancel">Annuler</button>
+        <button class="btn-save">Enregistrer</button>
+      </div>
+    </div>
+  `;
+
+  const list = modal.querySelector('#modal-links-list');
+  if (!sourceItems.length) {
+    list.innerHTML = `<div class="empty" style="padding:8px">Aucun élément disponible dans cette pièce</div>`;
+  } else {
+    sourceItems.forEach(si => {
+      const opt = document.createElement('label');
+      opt.className = 'link-option';
+      const chk = document.createElement('input');
+      chk.type = 'checkbox';
+      chk.value = si.id;
+      chk.checked = selected.has(si.id);
+      chk.addEventListener('change', () => {
+        if (chk.checked) selected.add(si.id);
+        else selected.delete(si.id);
+      });
+      opt.appendChild(chk);
+      opt.appendChild(document.createTextNode(si.label));
+      list.appendChild(opt);
+    });
+  }
+
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+  modal.querySelector('.btn-save').addEventListener('click', () => {
+    const newLinks = [...selected];
+    if (type === 'task') {
+      // Update task.needs and mirror into purchase.forTasks
+      item.needs = newLinks;
+      // Rebuild forTasks on all purchases in this room
+      room.purchases.forEach(p => {
+        p.forTasks = (p.forTasks || []).filter(tid => tid !== item.id);
+      });
+      newLinks.forEach(pid => {
+        const p = room.purchases.find(p => p.id === pid);
+        if (p) { if (!p.forTasks) p.forTasks = []; if (!p.forTasks.includes(item.id)) p.forTasks.push(item.id); }
+      });
+    } else {
+      // Update purchase.forTasks and mirror into task.needs
+      item.forTasks = newLinks;
+      room.tasks.forEach(t => {
+        t.needs = (t.needs||[]).filter(pid => pid !== item.id);
+      });
+      newLinks.forEach(tid => {
+        const t = room.tasks.find(t => t.id === tid);
+        if (t) { if (!t.needs) t.needs = []; if (!t.needs.includes(item.id)) t.needs.push(item.id); }
+      });
+    }
+    // Save in extras if applicable
+    if (extras[room.id]) {
+      if (type === 'task') {
+        const found = (extras[room.id].tasks||[]).find(t => t.id === item.id);
+        if (found) found.needs = newLinks;
+      } else {
+        const found = (extras[room.id].purchases||[]).find(p => p.id === item.id);
+        if (found) found.forTasks = newLinks;
+      }
+    }
+    save();
+    rebuildLabelMaps();
+    // Re-render all tasks and purchases in room
+    tasksList.querySelectorAll('.task').forEach(el => {
+      const t = room.tasks.find(t => t.id === el.dataset.id);
+      if (t) { const newEl = makeTaskEl(t, roomEl, room.id, tasksList, purchasesList); el.replaceWith(newEl); }
+    });
+    purchasesList.querySelectorAll('.purchase').forEach(el => {
+      const p = room.purchases.find(p => p.id === el.dataset.id);
+      if (p) { const newEl = makePurchaseEl(p, roomEl, room, tasksList, purchasesList); el.replaceWith(newEl); }
+    });
+    updateRoomProgress(roomEl);
+    refreshFeasibilityInRoom(roomEl);
+    modal.remove();
+  });
+
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function makeLinkBadges(links, type) {
+  if (!links || !links.length) return '';
+  return `<div class="link-badges">${links.map(l=>`<span class="link-badge ${type}">🔗 ${l}</span>`).join('')}</div>`;
+}
+
+// ─── TASK DETAIL / EDIT MODAL ────────────────────────────────────────────────
+// notes stored in state: state['note_'+id] = string
+function openTaskDetailModal(task, roomEl, roomId, tasksList, purchasesList) {
+  const room = ROOMS.find(r => r.id === roomId);
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+
+  const currentNote = state['note_' + task.id] || '';
+  let selectedPriority = task.priority || 'moyen';
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width:460px">
+      <h3>✏️ Modifier la tâche</h3>
+      <div style="display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1">
+        <div>
+          <div class="modal-section-title">Nom de la tâche</div>
+          <input class="modal-input" id="md-label" type="text" value="${task.label.replace(/"/g,'&quot;')}">
+        </div>
+        <div>
+          <div class="modal-section-title">Priorité</div>
+          <div class="modal-prio-row">
+            <button class="modal-prio-btn${selectedPriority==='urgent'?' selected':''}" data-p="urgent">🔴 Urgent</button>
+            <button class="modal-prio-btn${selectedPriority==='moyen'?' selected':''}" data-p="moyen">🟡 Moyen</button>
+            <button class="modal-prio-btn${selectedPriority==='calme'?' selected':''}" data-p="calme">🟢 Calme</button>
+          </div>
+        </div>
+        <div class="modal-sep"></div>
+        <div>
+          <div class="modal-section-title">💬 Notes & commentaires</div>
+          <textarea class="modal-textarea" id="md-note" placeholder="Ajoute des détails, mesures, rappels…">${currentNote}</textarea>
+        </div>
+      </div>
+      <div class="modal-actions" style="flex-wrap:wrap;gap:8px">
+        <button class="btn-delete">🗑 Supprimer</button>
+        <button class="btn-cancel" style="margin-left:auto">Annuler</button>
+        <button class="btn-save">💾 Enregistrer</button>
+      </div>
+    </div>
+  `;
+
+  // Priority selection
+  modal.querySelectorAll('.modal-prio-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedPriority = btn.dataset.p;
+      modal.querySelectorAll('.modal-prio-btn').forEach(b => b.classList.toggle('selected', b.dataset.p === selectedPriority));
+    });
+  });
+
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+
+  modal.querySelector('.btn-save').addEventListener('click', () => {
+    const newLabel = modal.querySelector('#md-label').value.trim();
+    const newNote  = modal.querySelector('#md-note').value.trim();
+    if (!newLabel) return;
+
+    task.label    = newLabel;
+    task.priority = selectedPriority;
+    taskLabels[task.id] = newLabel;
+
+    if (newNote) state['note_' + task.id] = newNote;
+    else delete state['note_' + task.id];
+
+    // Persist in extras if it's an added task
+    if (extras[roomId]) {
+      const found = (extras[roomId].tasks||[]).find(t => t.id === task.id);
+      if (found) { found.label = newLabel; found.priority = selectedPriority; }
+    }
+    save();
+
+    // Re-render this task element
+    const oldEl = tasksList.querySelector(`[data-id="${task.id}"]`);
+    if (oldEl) {
+      const newEl = makeTaskEl(task, roomEl, roomId, tasksList, purchasesList);
+      oldEl.replaceWith(newEl);
+    }
+    // Refresh purchase badges in case label changed
+    purchasesList.querySelectorAll('.purchase').forEach(el => {
+      const p = room ? room.purchases.find(p => p.id === el.dataset.id) : null;
+      if (p) { const newEl = makePurchaseEl(p, roomEl, room, tasksList, purchasesList); el.replaceWith(newEl); }
+    });
+    updateRoomProgress(roomEl);
+    modal.remove();
+  });
+
+  // Delete task
+  modal.querySelector('.btn-delete').addEventListener('click', () => {
+    if (!confirm(`Supprimer "${task.label}" ?`)) return;
+    const el = tasksList.querySelector(`[data-id="${task.id}"]`);
+    if (el) el.remove();
+    // Remove from room.tasks
+    if (room) room.tasks = room.tasks.filter(t => t.id !== task.id);
+    if (extras[roomId]) extras[roomId].tasks = (extras[roomId].tasks||[]).filter(t => t.id !== task.id);
+    // Remove from purchase forTasks links
+    if (room) room.purchases.forEach(p => { p.forTasks = (p.forTasks||[]).filter(tid => tid !== task.id); });
+    delete state[task.id];
+    delete state['note_' + task.id];
+    save();
+    if (!tasksList.querySelector('.task')) tasksList.innerHTML = `<div class="empty">Aucune tâche pour cette pièce</div>`;
+    updateRoomProgress(roomEl);
+    updateGlobalStats();
+    modal.remove();
+  });
+
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+  setTimeout(() => modal.querySelector('#md-label').select(), 50);
+}
+
+// ─── TASK ELEMENT ────────────────────────────────────────────────────────────
+function makeTaskEl(task, roomEl, roomId, tasksList, purchasesList) {
+  const room = ROOMS.find(r => r.id === roomId);
+  const el = document.createElement('div');
+  const f = getFeasibility(task);
+  let fClass = '';
+  if (f.status === 'ok') fClass = ' feasible';
+  else if (f.status === 'partial' || f.status === 'none') fClass = ' infeasible';
+  el.className = 'task' + (state[task.id] ? ' done' : '') + fClass;
+  el.dataset.id = task.id;
+
+  function render() {
+    const linkedLabels = (task.needs||[]).map(pid => purchaseLabels[pid]||pid);
+    const hasNote = !!(state['note_' + task.id]);
+    el.innerHTML = `
+      <div class="chk" data-role="toggle">${state[task.id] ? '✓' : ''}</div>
+      <div class="comment-dot" title="A des notes"></div>
+      <div style="flex:1;cursor:pointer" data-role="open">
+        <div class="t-label">${task.label}</div>
+        ${linkedLabels.length ? makeLinkBadges(linkedLabels, 'need') : ''}
+      </div>
+      ${feasibilityBadgeHTML(task)}
+      <span class="priority p-${task.priority}" title="Changer la priorité">${task.priority}</span>
+      <div class="item-actions">
+        <button class="action-btn" data-action="edit" title="Modifier la tâche">✏️</button>
+        <button class="action-btn" data-action="links" title="Modifier les liens">🔗</button>
+      </div>
+    `;
+    if (hasNote) el.classList.add('has-comment');
+    else el.classList.remove('has-comment');
+
+    // Checkbox zone → toggle done
+    el.querySelector('[data-role="toggle"]').addEventListener('click', e => {
+      e.stopPropagation();
+      toggleItem(el, task.id, roomEl);
+      document.querySelectorAll('.room').forEach(r => refreshFeasibilityInRoom(r));
+    });
+    // Label zone → open edit modal
+    el.querySelector('[data-role="open"]').addEventListener('click', e => {
+      e.stopPropagation();
+      openTaskDetailModal(task, roomEl, roomId, tasksList, purchasesList);
+    });
+    el.querySelector('.priority').addEventListener('click', e => {
+      e.stopPropagation();
+      showPrioPopup(e.currentTarget, task.priority, newP => {
+        task.priority = newP;
+        if (extras[roomId]) {
+          const found = (extras[roomId].tasks||[]).find(t => t.id === task.id);
+          if (found) found.priority = newP;
+          save();
+        }
+        el.className = 'task' + (state[task.id] ? ' done' : '') + fClass;
+        render();
+      });
+    });
+    el.querySelector('[data-action="edit"]').addEventListener('click', e => {
+      e.stopPropagation();
+      openTaskDetailModal(task, roomEl, roomId, tasksList, purchasesList);
+    });
+    el.querySelector('[data-action="links"]').addEventListener('click', e => {
+      e.stopPropagation();
+      if (room) openEditLinksModal(task, 'task', room, roomEl, tasksList, purchasesList);
+    });
+  }
+
+  render();
+  return el;
+}
+
+// ─── PURCHASE DETAIL / EDIT MODAL ───────────────────────────────────────────
+// price stored in state: state['price_'+id] = string
+function openPurchaseDetailModal(purchase, roomEl, room, tasksList, purchasesList) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+
+  const currentPrice = state['price_' + purchase.id] || '';
+  const currentNote  = state['note_'  + purchase.id] || '';
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width:460px">
+      <h3>🛒 Modifier l'achat</h3>
+      <div style="display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1">
+        <div>
+          <div class="modal-section-title">Nom de l'achat</div>
+          <input class="modal-input" id="mp-label" type="text" value="${purchase.label.replace(/"/g,'&quot;')}">
+        </div>
+        <div>
+          <div class="modal-section-title">💶 Prix estimé / connu</div>
+          <input class="modal-input" id="mp-price" type="text" placeholder="ex: 29.90 €" value="${currentPrice}">
+        </div>
+        <div class="modal-sep"></div>
+        <div>
+          <div class="modal-section-title">💬 Notes</div>
+          <textarea class="modal-textarea" id="mp-note" placeholder="Marque, référence, lien, taille…">${currentNote}</textarea>
+        </div>
+      </div>
+      <div class="modal-actions" style="flex-wrap:wrap;gap:8px">
+        <button class="btn-delete">🗑 Supprimer</button>
+        <button class="btn-cancel" style="margin-left:auto">Annuler</button>
+        <button class="btn-save">💾 Enregistrer</button>
+      </div>
+    </div>
+  `;
+
+  modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+
+  modal.querySelector('.btn-save').addEventListener('click', () => {
+    const newLabel = modal.querySelector('#mp-label').value.trim();
+    const newPrice = modal.querySelector('#mp-price').value.trim();
+    const newNote  = modal.querySelector('#mp-note').value.trim();
+    if (!newLabel) return;
+
+    purchase.label = newLabel;
+    purchaseLabels[purchase.id] = newLabel;
+
+    if (newPrice) state['price_' + purchase.id] = newPrice;
+    else delete state['price_' + purchase.id];
+    if (newNote) state['note_' + purchase.id] = newNote;
+    else delete state['note_' + purchase.id];
+
+    if (extras[room.id]) {
+      const found = (extras[room.id].purchases||[]).find(p => p.id === purchase.id);
+      if (found) found.label = newLabel;
+    }
+    save();
+
+    const oldEl = purchasesList.querySelector(`[data-id="${purchase.id}"]`);
+    if (oldEl) {
+      const newEl = makePurchaseEl(purchase, roomEl, room, tasksList, purchasesList);
+      oldEl.replaceWith(newEl);
+    }
+    // Refresh task badges in case label changed
+    tasksList.querySelectorAll('.task').forEach(el => {
+      const t = room.tasks.find(t => t.id === el.dataset.id);
+      if (t) { const newEl = makeTaskEl(t, roomEl, room.id, tasksList, purchasesList); el.replaceWith(newEl); }
+    });
+    updateRoomProgress(roomEl);
+    modal.remove();
+  });
+
+  modal.querySelector('.btn-delete').addEventListener('click', () => {
+    if (!confirm(`Supprimer "${purchase.label}" ?`)) return;
+    const el = purchasesList.querySelector(`[data-id="${purchase.id}"]`);
+    if (el) el.remove();
+    room.purchases = room.purchases.filter(p => p.id !== purchase.id);
+    if (extras[room.id]) extras[room.id].purchases = (extras[room.id].purchases||[]).filter(p => p.id !== purchase.id);
+    room.tasks.forEach(t => { t.needs = (t.needs||[]).filter(pid => pid !== purchase.id); });
+    delete state[purchase.id];
+    delete state['price_' + purchase.id];
+    delete state['note_'  + purchase.id];
+    save();
+    if (!purchasesList.querySelector('.purchase')) purchasesList.innerHTML = `<div class="empty">Aucun achat pour cette pièce</div>`;
+    // Re-render tasks to remove stale link badges
+    tasksList.querySelectorAll('.task').forEach(el => {
+      const t = room.tasks.find(t => t.id === el.dataset.id);
+      if (t) { const newEl = makeTaskEl(t, roomEl, room.id, tasksList, purchasesList); el.replaceWith(newEl); }
+    });
+    updateRoomProgress(roomEl);
+    updateGlobalStats();
+    refreshFeasibilityInRoom(roomEl);
+    modal.remove();
+  });
+
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+  setTimeout(() => modal.querySelector('#mp-label').select(), 50);
+}
+
+// ─── PURCHASE ELEMENT ────────────────────────────────────────────────────────
+function makePurchaseEl(purchase, roomEl, room, tasksList, purchasesList) {
+  const el = document.createElement('div');
+  el.className = 'purchase' + (state[purchase.id] ? ' done' : '');
+  el.dataset.id = purchase.id;
+
+  function render() {
+    const linkedLabels = (purchase.forTasks||[]).map(tid => taskLabels[tid]||tid);
+    const price = state['price_' + purchase.id] || '';
+    const hasNote = !!(state['note_' + purchase.id]);
+    el.innerHTML = `
+      <div class="chk" data-role="toggle">${state[purchase.id] ? '✓' : ''}</div>
+      <div class="comment-dot" title="A des notes"></div>
+      <div style="flex:1;cursor:pointer" data-role="open">
+        <div class="p-label">${purchase.label}</div>
+        ${linkedLabels.length ? makeLinkBadges(linkedLabels, 'for') : ''}
+      </div>
+      ${price ? `<span class="price-badge">💶 ${price}</span>` : ''}
+      <div class="item-actions">
+        <button class="action-btn" data-action="edit" title="Modifier l'achat">✏️</button>
+        <button class="action-btn" data-action="links" title="Modifier les liens">🔗</button>
+      </div>
+    `;
+    if (hasNote) el.classList.add('has-comment');
+    else el.classList.remove('has-comment');
+
+    // Checkbox zone → toggle done
+    el.querySelector('[data-role="toggle"]').addEventListener('click', e => {
+      e.stopPropagation();
+      toggleItem(el, purchase.id, roomEl);
+      document.querySelectorAll('.room').forEach(r => refreshFeasibilityInRoom(r));
+    });
+    // Label zone → open edit modal
+    el.querySelector('[data-role="open"]').addEventListener('click', e => {
+      e.stopPropagation();
+      openPurchaseDetailModal(purchase, roomEl, room, tasksList, purchasesList);
+    });
+    el.querySelector('[data-action="edit"]').addEventListener('click', e => {
+      e.stopPropagation();
+      openPurchaseDetailModal(purchase, roomEl, room, tasksList, purchasesList);
+    });
+    el.querySelector('[data-action="links"]').addEventListener('click', e => {
+      e.stopPropagation();
+      if (room) openEditLinksModal(purchase, 'purchase', room, roomEl, tasksList, purchasesList);
+    });
+  }
+
+  render();
+  return el;
+}
+
+// ─── ADD FORM ────────────────────────────────────────────────────────────────
+function buildAddForm(type, room, roomEl, tasksList, purchasesList) {
+  const area = document.createElement('div');
+  area.className = 'add-area';
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'add-toggle';
+  toggleBtn.textContent = type === 'task' ? '+ Ajouter une tâche…' : '+ Ajouter un achat…';
+
+  const form = document.createElement('div');
+  form.className = 'add-form';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = type === 'task' ? 'Nom de la tâche…' : "Nom de l'achat…";
+  form.appendChild(input);
+
+  let selectedPriority = 'moyen';
+  if (type === 'task') {
+    const prioLabel = document.createElement('div');
+    prioLabel.className = 'links-label';
+    prioLabel.textContent = 'Importance :';
+    form.appendChild(prioLabel);
+    const prioRow = document.createElement('div');
+    prioRow.className = 'priority-selector';
+    ['urgent','moyen','calme'].forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'prio-btn' + (p === 'moyen' ? ' selected' : '');
+      btn.dataset.p = p;
+      btn.textContent = { urgent: '🔴 Urgent', moyen: '🟡 Moyen', calme: '🟢 Calme' }[p];
+      btn.addEventListener('click', () => {
+        selectedPriority = p;
+        prioRow.querySelectorAll('.prio-btn').forEach(b => b.classList.toggle('selected', b.dataset.p === p));
+      });
+      prioRow.appendChild(btn);
+    });
+    form.appendChild(prioRow);
+  }
+
+  const linksLabel = document.createElement('div');
+  linksLabel.className = 'links-label';
+  linksLabel.textContent = type === 'task' ? 'Achats nécessaires :' : 'Pour quelle(s) tâche(s) :';
+  form.appendChild(linksLabel);
+
+  const linksList = document.createElement('div');
+  linksList.className = 'links-list';
+
+  function refreshLinksList() {
+    linksList.innerHTML = '';
+    const sourceItems = type === 'task'
+      ? [...room.purchases, ...(extras[room.id]?.purchases||[])]
+      : [...room.tasks,    ...(extras[room.id]?.tasks||[])];
+    if (!sourceItems.length) {
+      linksList.innerHTML = `<div class="empty" style="padding:4px 8px">Aucun élément disponible</div>`;
+      return;
+    }
+    sourceItems.forEach(item => {
+      const opt = document.createElement('label');
+      opt.className = 'link-option';
+      const chk = document.createElement('input');
+      chk.type = 'checkbox'; chk.value = item.id;
+      opt.appendChild(chk);
+      opt.appendChild(document.createTextNode(item.label));
+      linksList.appendChild(opt);
+    });
+  }
+  form.appendChild(linksList);
+
+  const btnRow = document.createElement('div');
+  btnRow.className = 'add-form-row';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'add-form-cancel';
+  cancelBtn.textContent = 'Annuler';
+  cancelBtn.addEventListener('click', () => { form.classList.remove('open'); input.value = ''; });
+
+  const submitBtn = document.createElement('button');
+  submitBtn.className = 'add-form-submit';
+  submitBtn.textContent = type === 'task' ? '+ Tâche' : '+ Achat';
+
+  submitBtn.addEventListener('click', () => {
+    const val = input.value.trim();
+    if (!val) return;
+    const id = (type === 'task' ? 'xt_' : 'xp_') + room.id + '_' + Date.now();
+    const selectedLinks = [...linksList.querySelectorAll('input[type=checkbox]:checked')].map(c => c.value);
+    if (!extras[room.id]) extras[room.id] = { tasks: [], purchases: [] };
+    if (type === 'task') {
+      const task = { id, label: val, priority: selectedPriority, needs: selectedLinks };
+      extras[room.id].tasks.push(task);
+      room.tasks.push(task);
+      taskLabels[id] = val;
+      const emptyEl = tasksList.querySelector('.empty');
+      if (emptyEl) emptyEl.remove();
+      tasksList.appendChild(makeTaskEl(task, roomEl, room.id, tasksList, purchasesList));
+      selectedLinks.forEach(pid => {
+        const purch = room.purchases.find(p => p.id === pid);
+        if (purch) { if (!purch.forTasks) purch.forTasks=[]; purch.forTasks.push(id); }
+        const pEl = purchasesList.querySelector(`[data-id="${pid}"]`);
+        if (pEl) { const newEl = makePurchaseEl(purch, roomEl, room, tasksList, purchasesList); purchasesList.replaceChild(newEl, pEl); }
+      });
+    } else {
+      const purchase = { id, label: val, forTasks: selectedLinks };
+      extras[room.id].purchases.push(purchase);
+      room.purchases.push(purchase);
+      purchaseLabels[id] = val;
+      const emptyEl = purchasesList.querySelector('.empty');
+      if (emptyEl) emptyEl.remove();
+      purchasesList.appendChild(makePurchaseEl(purchase, roomEl, room, tasksList, purchasesList));
+      selectedLinks.forEach(tid => {
+        const task = room.tasks.find(t => t.id === tid);
+        if (task) { if (!task.needs) task.needs=[]; task.needs.push(id); }
+        const tEl = tasksList.querySelector(`[data-id="${tid}"]`);
+        if (tEl) { const newEl = makeTaskEl(task, roomEl, room.id, tasksList, purchasesList); tasksList.replaceChild(newEl, tEl); }
+      });
+    }
+    save();
+    input.value = '';
+    form.classList.remove('open');
+    updateRoomProgress(roomEl);
+    updateGlobalStats();
+    refreshFeasibilityInRoom(roomEl);
+  });
+
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') submitBtn.click(); });
+  btnRow.appendChild(cancelBtn);
+  btnRow.appendChild(submitBtn);
+  form.appendChild(btnRow);
+
+  toggleBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    form.classList.toggle('open');
+    if (form.classList.contains('open')) { refreshLinksList(); input.focus(); }
+  });
+
+  area.appendChild(toggleBtn);
+  area.appendChild(form);
+  return area;
+}
+
+// ─── RENDER ROOM ─────────────────────────────────────────────────────────────
+function renderRoom(room) {
+  const div = document.createElement('div');
+  div.className = 'room';
+  div.id = 'room_' + room.id;
+
+  const roomExtras = extras[room.id] || { tasks: [], purchases: [] };
+  const allTasks = [...room.tasks, ...roomExtras.tasks.filter(et => !room.tasks.find(t => t.id === et.id))];
+  const allPurchases = [...room.purchases, ...roomExtras.purchases.filter(ep => !room.purchases.find(p => p.id === ep.id))];
+  room.tasks = allTasks;
+  room.purchases = allPurchases;
+
+  div.innerHTML = `
+    <div class="room-header">
+      <span class="room-icon">${room.icon}</span>
+      <span class="room-name">${room.name}</span>
+      <span class="room-progress-pill">0/0</span>
+      <span class="chevron">▾</span>
+    </div>
+    <div class="room-body">
+      <div class="prog-bar"><div class="prog-fill"></div></div>
+      <div class="tabs">
+        <div class="tab active" data-tab="tasks">🔨 Tâches</div>
+        <div class="tab" data-tab="purchases">🛒 Achats</div>
+      </div>
+      <div class="tab-pane active" data-pane="tasks">
+        <div class="tasks-list"></div>
+      </div>
+      <div class="tab-pane" data-pane="purchases">
+        <div class="purchases-list"></div>
+      </div>
+    </div>
+  `;
+
+  div.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', e => {
+      e.stopPropagation();
+      div.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      div.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      div.querySelector(`[data-pane="${tab.dataset.tab}"]`).classList.add('active');
+    });
+  });
+
+  div.querySelector('.room-header').addEventListener('click', () => div.classList.toggle('collapsed'));
+
+  const tasksList = div.querySelector('.tasks-list');
+  const purchasesList = div.querySelector('.purchases-list');
+
+  if (!room.tasks.length) tasksList.innerHTML = `<div class="empty">Aucune tâche pour cette pièce</div>`;
+  room.tasks.forEach(task => tasksList.appendChild(makeTaskEl(task, div, room.id, tasksList, purchasesList)));
+
+  if (!room.purchases.length) purchasesList.innerHTML = `<div class="empty">Aucun achat pour cette pièce</div>`;
+  room.purchases.forEach(purchase => purchasesList.appendChild(makePurchaseEl(purchase, div, room, tasksList, purchasesList)));
+
+  div.querySelector('[data-pane="tasks"]').appendChild(buildAddForm('task', room, div, tasksList, purchasesList));
+  div.querySelector('[data-pane="purchases"]').appendChild(buildAddForm('purchase', room, div, tasksList, purchasesList));
+
+  document.getElementById('rooms').appendChild(div);
+  updateRoomProgress(div);
+}
+
+// ─── ROOM NAV ────────────────────────────────────────────────────────────────
+function buildNav() {
+  const nav = document.getElementById('room-nav');
+  ROOMS.forEach(room => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn';
+    btn.textContent = room.icon + ' ' + room.name;
+    btn.dataset.roomId = room.id;
+    btn.addEventListener('click', () => {
+      const target = document.getElementById('room_' + room.id);
+      if (!target) return;
+      // Expand if collapsed
+      target.classList.remove('collapsed');
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Highlight active
+      nav.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      setTimeout(() => btn.classList.remove('active'), 1500);
+    });
+    nav.appendChild(btn);
+  });
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+rebuildLabelMaps();
+ROOMS.forEach(renderRoom);
+buildNav();
+updateGlobalStats();
+</script>
+</body>
+</html>
